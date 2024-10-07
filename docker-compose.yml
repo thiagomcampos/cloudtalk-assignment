@@ -1,0 +1,64 @@
+services:
+  product-service:
+    build: ./product-service
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mysql
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=database_user
+      - MYSQL_PASSWORD=database_password
+      - MYSQL_DATABASE=database_name
+      - RABBITMQ_QUEUE=review_queue
+      - REDIS_URL=redis://redis:6379
+  review-processing-service:
+    build: ./review-processing-service
+    depends_on:
+      - mysql
+      - redis
+      - rabbitmq
+      - product-service
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=database_user
+      - MYSQL_PASSWORD=database_password
+      - MYSQL_DATABASE=database_name
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_QUEUE=review_queue
+      - REDIS_URL=redis://redis:6379
+  mysql:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=mysql_root_password
+      - MYSQL_DATABASE=database_name
+      - MYSQL_USER=database_user
+      - MYSQL_PASSWORD=database_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: ["mysqld", "--init-file", "/docker-entrypoint-initdb.d/init.sql"]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "database_user",
+          "-p'database_password'",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  redis:
+    image: redis:alpine
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+volumes:
+  mysql_data:
