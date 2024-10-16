@@ -1,6 +1,6 @@
-# CloudTalk Assignment - Product Review System
+# Product Review System
 
-This project implements a two-service system for managing product reviews, as described in the CloudTalk assignment.
+This project implements a two-service system for managing product reviews.
 
 ## Services
 
